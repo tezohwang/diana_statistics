@@ -103,8 +103,8 @@ FIELDS = {
 }
 
 TIME = {
-    # 0.1, 0.5, 1.0, 2.0(O), 1.5(X)
-    'loop_wait_time':2.0,
+    # on local: 0.1, 0.5, 1.0, 2.0(local), 1.5(X), 3.0
+    'loop_wait_time':3.0,
 }
 
 FETCH = {
