@@ -58,6 +58,8 @@ def update_db(db, collection, id_field, insights, breakdowns):
 	stats = db[collection]
 	for insight in insights:
 		insight['breakdowns'] = breakdowns
+		if not breakdowns:
+			insight['breakdowns'] = ['none']
 		stats.replace_one(
 			{
 				id_field: insight[id_field],
@@ -69,6 +71,8 @@ def update_db(db, collection, id_field, insights, breakdowns):
 	return print("update_db done")
 
 def fetch_all():
+	start_time = time.time()
+	#------------------------
 	db = connect_db('notification')
 	users = get_users(db)
 	db = connect_db('diana')
@@ -77,7 +81,7 @@ def fetch_all():
 		adaccounts = get_adaccounts(user)
 		for adaccount in adaccounts:
 			entity_types = ['campaign', 'adset', 'ad']
-			breakdowns = [['age', 'gender'], ['country'], ['publisher_platform']]
+			breakdowns = [['age'], ['gender'], ['age', 'gender'], ['country'], ['publisher_platform'], []]
 			for entity_type in entity_types:
 				entities = get_entities_list(user, adaccount, entity_type)
 				time.sleep(TIME['loop_wait_time'])
@@ -86,5 +90,7 @@ def fetch_all():
 						insights = get_entity_insights(user, entity_type, entity, breakdown)
 						update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
 						time.sleep(TIME['loop_wait_time'])
-
+	#------------------------
+	print("start_time", start_time)
+	print("--- %s seconds ---" %(time.time() - start_time))
 	return print("fetch_all done -- {}".format(datetime.datetime.now()))
