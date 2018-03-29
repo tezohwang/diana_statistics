@@ -87,4 +87,4 @@ def fetch_all():
 						update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
 						time.sleep(TIME['loop_wait_time'])
 
-	return print("fetch_all done -- {}".format(datetime.datetime.now))
+	return print("fetch_all done -- {}".format(datetime.datetime.now()))
