@@ -1,9 +1,9 @@
 from django.shortcuts import render
 
 from .database import connect_db
-from .constant import FIELDS
+from .constant import FIELDS, TIME
 
-import requests
+import requests, time, datetime
 
 # Create your views here.
 
@@ -22,95 +22,69 @@ def get_adaccounts(user):
 	except Exception as e:
 		return []
 
-def get_campaigns_list(user, adaccount):
-	params = {
-		# 'effective_status': "['ACTIVE', 'PAUSED', 'CAMPAIGN_PAUSED', 'ADSET_PAUSED']",
-		'date_preset': 'lifetime',
-	}
-	url = 'https://graph.facebook.com/v2.11/' + adaccount['id'] + '/campaigns?access_token=' + user['long_access_token']
+def get_entities_list(user, adaccount, entity):
+	params = {'date_preset': 'lifetime'}
+	url = 'https://graph.facebook.com/v2.11/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
 	response = requests.get(url, params=params).json()
+	print('-'*10)
 	print(response)
+	print(user['username'], adaccount, entity)
+	print('-'*10)
 	try:
 		return response['data']
 	except Exception as e:
 		return []
 
-def get_ads_list(user, adaccount):
-	params = {
-		'effective_status': "['ACTIVE', 'PAUSED', 'CAMPAIGN_PAUSED', 'ADSET_PAUSED']",
-		'date_preset': 'lifetime',
-	}
-	url = 'https://graph.facebook.com/v2.11/' + adaccount['id'] + '/ads?access_token=' + user['long_access_token']
-	response = requests.get(url, params=params).json()
-	# print(response)
-	try:
-		return response['data']
-	except Exception as e:
-		return []
-
-def get_campaign_insights(user, campaign, breakdowns):
-	fields = FIELDS
+def get_entity_insights(user, entity_name, entity, breakdowns):
+	fields = FIELDS[entity_name]
 	params = {
 		'fields': str(fields),
 		'date_preset': 'lifetime',
 		'time_increment': 'all_days',
-		'breakdowns': str('["' + breakdowns + '"]'),
+		'breakdowns': str(breakdowns),
 	}
-	# print(params)
-
-	url = 'https://graph.facebook.com/v2.11/' + campaign['id'] + '/insights?access_token=' + user['long_access_token']
+	url = 'https://graph.facebook.com/v2.11/' + entity['id'] + '/insights?access_token=' + user['long_access_token']
 	response = requests.get(url, params=params).json()
-	# print(response)
-	# print(len(response['data']))
+	print('-'*10)
+	print(response)
+	print(user['username'], entity_name, entity, breakdowns)
+	print('-'*10)
 	try:
 		return response['data']
 	except Exception as e:
 		return []
 
-def get_ad_insights(user, ad):
-	fields = FIELDS
-	params = {
-		'fields': str(fields),
-		'date_preset': 'lifetime',
-		'time_increment': 'all_days',
-	}
-
-	url = 'https://graph.facebook.com/v2.11/' + ad['id'] + '/insights?access_token=' + user['long_access_token']
-	response = requests.get(url, params=params).json()
-	# print(len(response['data']))
-	try:
-		return response['data']
-	except Exception as e:
-		return []
-
-def update_db(db, insight):
-	stats = db['stats_campaign']
-	stats.replace_one(
-		{
-			'campaign_id':insight['campaign_id'],
-		},
-		insight,
-		upsert=True,
-	)
+def update_db(db, collection, id_field, insights, breakdowns):
+	stats = db[collection]
+	for insight in insights:
+		insight['breakdowns'] = breakdowns
+		stats.replace_one(
+			{
+				id_field: insight[id_field],
+				'breakdowns': insight['breakdowns'],
+			},
+			insight,
+			upsert=True,
+		)
 	return print("update_db done")
 
 def fetch_all():
 	db = connect_db('notification')
 	users = get_users(db)
 	db = connect_db('diana')
+	
 	for user in users:
 		adaccounts = get_adaccounts(user)
-
 		for adaccount in adaccounts:
-			campaigns = get_campaigns_list(user, adaccount)
-			# print(campaigns)
+			entity_types = ['campaign', 'adset', 'ad']
+			breakdowns = [['age', 'gender'], ['country'], ['publisher_platform']]
+			for entity_type in entity_types:
+				entities = get_entities_list(user, adaccount, entity_type)
+				time.sleep(TIME['loop_wait_time'])
+				for entity in entities:
+					for breakdown in breakdowns:
+						insights = get_entity_insights(user, entity_type, entity, breakdown)
+						update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
+						time.sleep(TIME['loop_wait_time'])
 
-			for campaign in campaigns:
-				insights_age = get_campaign_insights(user, campaign, 'age')
-				insights_gender = get_campaign_insights(user, campaign, 'gender')
-				# insights_region = get_campaign_insights(user, campaign, 'region')
-				insights_country = get_campaign_insights(user, campaign, 'country')
-				insights_platform = get_campaign_insights(user, campaign, 'publisher_platform')
-				# print(insights_age)
-
-	return print("fetch_all done")
+	return print("fetch_all done -- {}".format(datetime.datetime.now))
