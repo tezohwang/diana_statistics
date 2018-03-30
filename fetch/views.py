@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from .database import connect_db
 from .constant import FIELDS, TIME
@@ -8,7 +9,36 @@ import requests, time, datetime
 # Create your views here.
 
 # Routing View
+@csrf_exempt
+def get_stats(request):
+	if request.method == "POST":
+		req = json.loads(request.body.decode('utf-8'))
+		entity = req['entity']
+		measure = req['measure']
+		breakdown = req['breakdown']
+		objective = req['objective']
 
+		db = connect_db('diana')
+		entities = list(db['stats_' + entity].find(
+			'breakdown':[breakdown],
+			'objective':objective,
+		))
+		spends = [entity['spend'] for entity in entities]
+		impressions = [entity['impressions'] for entity in entities]
+		reaches = [entity['reach'] for entity in entities]
+		clicks = [entity['clicks'] for entity in entities]
+
+		if measure = 'average':
+			result = {
+				avg_cpm : sum(impressions)/sum(spends),
+				avg_cpc : sum(clicks)/sum(spends),
+				avg_frequency : sum(impressions)/sum(reaches),
+				avg_ctr : sum(clicks)/sum(impressions)*100,
+			}
+		return result
+	return HttpResponse("error")
+
+	
 # Control View
 def get_users(db):
 	return list(db['userinfo'].find())
