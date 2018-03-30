@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .database import connect_db
-from .constant import FIELDS, TIME
+from .constant import FIELDS, TIME, RESULT
 
 import requests, time, datetime, json
 from statistics import median
@@ -16,47 +16,48 @@ def stats(request):
 	if request.method == "POST":
 		req = json.loads(request.body.decode('utf-8'))
 		entity = req['entity']
-		measure = req['measure']
 		breakdown = req['breakdown']
 		objective = req['objective']
 		account_currency = req['account_currency']
-		# print(entity, measure, breakdown, objective)
+		# print(entity, breakdown, objective, account_currency)
 
 		db = connect_db('diana')
-		entities = list(db['stats_' + entity].find({
-				'breakdowns':[breakdown],
-				'objective':objective,
-				'account_currency':account_currency,
-			})
-		)
-		# print(entities)
-		spends = [float(entity['spend']) for entity in entities]
-		impressions = [float(entity['impressions']) for entity in entities]
-		reaches = [float(entity['reach']) for entity in entities]
-		clicks = [float(entity['clicks']) for entity in entities]
-		cpms = [float(entity['cpm']) for entity in entities]
-		cpcs = [float(entity['cpc']) for entity in entities]
-		ctrs = [float(entity['ctr']) for entity in entities]
-		frequencys = [float(entity['frequency']) for entity in entities]
+		for key in RESULT[breakdown].keys():
+			print(breakdown, key)
+			entities = list(db['stats_' + entity].find({
+					'breakdowns':[breakdown],
+					'objective':objective,
+					'account_currency':account_currency,
+					breakdown:key,
+				})
+			)
+			if not entities:
+				continue
+			if not float(entities[0]['impressions']) * float(entities[0]['clicks']):
+				continue
+			# print(entities)
 
-		if measure == 'average':
-			result = {
-				'avg_cpm' : str(sum(spends)/sum(impressions)*1000),
-				'avg_cpc' : str(sum(spends)/sum(clicks)),
-				'avg_frequency' : str(sum(impressions)/sum(reaches)),
-				'avg_ctr' : str(sum(clicks)/sum(impressions)*100),
-			}
-			return HttpResponse(json.dumps(result))
+			spends = [float(entity['spend']) for entity in entities]
+			impressions = [float(entity['impressions']) for entity in entities]
+			reaches = [float(entity['reach']) for entity in entities]
+			clicks = [float(entity['clicks']) for entity in entities]
+			cpms = [float(entity['cpm']) for entity in entities]
+			cpcs = [float(entity['cpc']) for entity in entities]
+			ctrs = [float(entity['ctr']) for entity in entities]
+			frequencys = [float(entity['frequency']) for entity in entities]
 
-		if measure == 'median':
-			result = {
+			RESULT[breakdown][key] = {
+				'avg_cpm' : sum(spends)/sum(impressions)*1000,
+				'avg_cpc' : sum(spends)/sum(clicks),
+				'avg_frequency' : sum(impressions)/sum(reaches),
+				'avg_ctr' : sum(clicks)/sum(impressions)*100,
 				'med_cpm' : median(cpms),
 				'med_cpc' : median(cpcs),
 				'med_frequency' : median(frequencys),
 				'med_ctr' : median(ctrs),
 			}
-			return HttpResponse(json.dumps(result))
-		return HttpResponse("Invalid request")
+		RESULT[breakdown]['currency'] = account_currency
+		return HttpResponse(json.dumps(RESULT[breakdown]))
 	return HttpResponse("error")
 
 	

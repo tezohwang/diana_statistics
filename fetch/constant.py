@@ -110,11 +110,35 @@ TIME = {
     # combination: (1.0, 310, X), (3.0, 310, ) 
 }
 
-FETCH = {
-    # yesterday
-    'from_days':1,
-    # minimum impression limit
-    'min_imp_limit':10
+RESULT = {
+    'age':{
+        '13-17':{},
+        '18-24':{},
+        '25-34':{},
+        '35-44':{},
+        '45-54':{},
+        '55-64':{},
+        '65+':{},
+    },
+    'gender':{
+        'male':{},
+        'female':{},
+    },
+    'country':{
+        'US':{},
+        'KR':{},
+        'MX':{},
+        'PE':{},
+        'RO':{},
+        'DZ':{},
+        'GD':{},
+    },
+    'publisher_platform':{
+        'facebook':{},
+        'instagram':{},
+        'messenger':{},
+        'audience_network':{},
+    }
 }
 
 MAIL = {
