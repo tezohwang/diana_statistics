@@ -14,7 +14,7 @@ def get_users(db):
 	return list(db['userinfo'].find())
 
 def get_adaccounts(user):
-	url = 'https://graph.facebook.com/v2.11/' + user['user_id'] + '/adaccounts?access_token=' + user['long_access_token']
+	url = 'https://graph.facebook.com/v2.12/' + user['user_id'] + '/adaccounts?access_token=' + user['long_access_token']
 	response = requests.get(url).json()
 	# print(response)
 	try:
@@ -23,13 +23,21 @@ def get_adaccounts(user):
 		return []
 
 def get_entities_list(user, adaccount, entity):
-	params = {'date_preset': 'lifetime'}
-	url = 'https://graph.facebook.com/v2.11/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
-	response = requests.get(url, params=params).json()
+	params = {'date_preset': 'last_90d'}
+	url = 'https://graph.facebook.com/v2.12/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
+	response = requests.get(url, params=params)
+	headers = response.headers
+	response = response.json()
 	print('-'*10)
 	print(response)
+	# print(headers)
 	print(user['username'], adaccount, entity)
 	print('-'*10)
+	if 'error' in response:
+		if response['error']['code'] == 17:
+			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			time.sleep(TIME['limit_wait_time'])
+			response['data'] = get_entities_list(user, adaccount, entity)
 	try:
 		return response['data']
 	except Exception as e:
@@ -39,16 +47,24 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 	fields = FIELDS[entity_name]
 	params = {
 		'fields': str(fields),
-		'date_preset': 'lifetime',
+		'date_preset': 'last_90d',
 		'time_increment': 'all_days',
 		'breakdowns': str(breakdowns),
 	}
-	url = 'https://graph.facebook.com/v2.11/' + entity['id'] + '/insights?access_token=' + user['long_access_token']
-	response = requests.get(url, params=params).json()
+	url = 'https://graph.facebook.com/v2.12/' + entity['id'] + '/insights?access_token=' + user['long_access_token']
+	response = requests.get(url, params=params)
+	headers = response.headers
+	response = response.json()
 	print('-'*10)
 	print(response)
+	# print(headers)
 	print(user['username'], entity_name, entity, breakdowns)
 	print('-'*10)
+	if 'error' in response:
+		if response['error']['code'] == 17:
+			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			time.sleep(TIME['limit_wait_time'])
+			response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
 	try:
 		return response['data']
 	except Exception as e:
@@ -79,17 +95,17 @@ def fetch_all():
 	
 	for user in users:
 		adaccounts = get_adaccounts(user)
-		for adaccount in adaccounts:
-			entity_types = ['campaign', 'adset', 'ad']
-			breakdowns = [['age'], ['gender'], ['age', 'gender'], ['country'], ['publisher_platform'], []]
-			for entity_type in entity_types:
-				entities = get_entities_list(user, adaccount, entity_type)
-				time.sleep(TIME['loop_wait_time'])
-				for entity in entities:
-					for breakdown in breakdowns:
-						insights = get_entity_insights(user, entity_type, entity, breakdown)
-						update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
-						time.sleep(TIME['loop_wait_time'])
+		breakdowns = [['age'], ['gender'], ['country'], ['publisher_platform'], []]
+		for breakdown in breakdowns:
+			for adaccount in adaccounts:
+				entity_types = ['campaign', 'adset', 'ad']
+				for entity_type in entity_types:
+					entities = get_entities_list(user, adaccount, entity_type)
+					time.sleep(TIME['loop_wait_time'])
+					for entity in entities:
+							insights = get_entity_insights(user, entity_type, entity, breakdown)
+							update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
+							time.sleep(TIME['loop_wait_time'])
 	#------------------------
 	print("start_time", start_time)
 	print("--- %s seconds ---" %(time.time() - start_time))
