@@ -1,41 +1,62 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .database import connect_db
 from .constant import FIELDS, TIME
 
-import requests, time, datetime
+import requests, time, datetime, json
+from statistics import median
 
 # Create your views here.
 
 # Routing View
 @csrf_exempt
-def get_stats(request):
+def stats(request):
 	if request.method == "POST":
 		req = json.loads(request.body.decode('utf-8'))
 		entity = req['entity']
 		measure = req['measure']
 		breakdown = req['breakdown']
 		objective = req['objective']
+		account_currency = req['account_currency']
+		# print(entity, measure, breakdown, objective)
 
 		db = connect_db('diana')
-		entities = list(db['stats_' + entity].find(
-			'breakdown':[breakdown],
-			'objective':objective,
-		))
-		spends = [entity['spend'] for entity in entities]
-		impressions = [entity['impressions'] for entity in entities]
-		reaches = [entity['reach'] for entity in entities]
-		clicks = [entity['clicks'] for entity in entities]
+		entities = list(db['stats_' + entity].find({
+				'breakdowns':[breakdown],
+				'objective':objective,
+				'account_currency':account_currency,
+			})
+		)
+		# print(entities)
+		spends = [float(entity['spend']) for entity in entities]
+		impressions = [float(entity['impressions']) for entity in entities]
+		reaches = [float(entity['reach']) for entity in entities]
+		clicks = [float(entity['clicks']) for entity in entities]
+		cpms = [float(entity['cpm']) for entity in entities]
+		cpcs = [float(entity['cpc']) for entity in entities]
+		ctrs = [float(entity['ctr']) for entity in entities]
+		frequencys = [float(entity['frequency']) for entity in entities]
 
-		if measure = 'average':
+		if measure == 'average':
 			result = {
-				avg_cpm : sum(impressions)/sum(spends),
-				avg_cpc : sum(clicks)/sum(spends),
-				avg_frequency : sum(impressions)/sum(reaches),
-				avg_ctr : sum(clicks)/sum(impressions)*100,
+				'avg_cpm' : str(sum(spends)/sum(impressions)*1000),
+				'avg_cpc' : str(sum(spends)/sum(clicks)),
+				'avg_frequency' : str(sum(impressions)/sum(reaches)),
+				'avg_ctr' : str(sum(clicks)/sum(impressions)*100),
 			}
-		return result
+			return HttpResponse(json.dumps(result))
+
+		if measure == 'median':
+			result = {
+				'med_cpm' : median(cpms),
+				'med_cpc' : median(cpcs),
+				'med_frequency' : median(frequencys),
+				'med_ctr' : median(ctrs),
+			}
+			return HttpResponse(json.dumps(result))
+		return HttpResponse("Invalid request")
 	return HttpResponse("error")
 
 	
