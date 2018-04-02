@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .database import connect_db
 from .constant import FIELDS, TIME, RESULT
 
-import requests, time, datetime, json
+import requests, time, datetime, json, gzip
 from statistics import median
 
 # Create your views here.
@@ -77,8 +77,9 @@ def get_adaccounts(user):
 def get_entities_list(user, adaccount, entity):
 	params = {'date_preset': 'last_90d'}
 	url = 'https://graph.facebook.com/v2.12/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
-	response = requests.get(url, params=params)
-	headers = response.headers
+	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
+	response = requests.get(url, params=params, headers=headers)
+	# headers = response.headers
 	response = response.json()
 	print('-'*10)
 	print(response)
@@ -104,8 +105,9 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 		'breakdowns': str(breakdowns),
 	}
 	url = 'https://graph.facebook.com/v2.12/' + entity['id'] + '/insights?access_token=' + user['long_access_token']
-	response = requests.get(url, params=params)
-	headers = response.headers
+	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
+	response = requests.get(url, params=params, headers=headers)
+	# headers = response.headers
 	response = response.json()
 	print('-'*10)
 	print(response)
