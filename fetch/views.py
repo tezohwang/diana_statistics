@@ -128,6 +128,7 @@ def update_db(db, collection, id_field, insights, breakdowns):
 		insight['breakdowns'] = breakdowns
 		if not breakdowns:
 			insight['breakdowns'] = ['none']
+		insight['updated_time'] = datetime.datetime.now()
 		stats.replace_one(
 			{
 				id_field: insight[id_field],
