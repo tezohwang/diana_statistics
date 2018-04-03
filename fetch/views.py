@@ -14,20 +14,19 @@ from statistics import median
 @csrf_exempt
 def stats(request):
 	if request.method == "POST":
-		req = json.loads(request.body.decode('utf-8'))
-		entity = req['entity']
-		breakdown = req['breakdown']
-		objective = req['objective']
-		account_currency = req['account_currency']
-		# print(entity, breakdown, objective, account_currency)
+		req = 				json.loads(request.body.decode('utf-8'))
+		entity = 			req['entity']
+		breakdown = 		req['breakdown']
+		objective = 		req['objective']
+		account_currency = 	req['account_currency']
 
 		db = connect_db('diana')
 		for key in RESULT[breakdown].keys():
 			print(breakdown, key)
 			query_obj = {
-				'breakdowns':[breakdown],
-				'objective':objective,
-				'account_currency':account_currency,
+				'breakdowns':		[breakdown],
+				'objective':		objective,
+				'account_currency':	account_currency,
 			}
 			if not breakdown == 'none':
 				query_obj[breakdown] = key
@@ -39,23 +38,35 @@ def stats(request):
 			# print(entities)
 			print(len(entities))
 			spends = [float(entity['spend']) for entity in entities]
-			impressions = [float(entity['impressions']) for entity in entities]
-			reaches = [float(entity['reach']) for entity in entities]
-			clicks = [float(entity['clicks']) for entity in entities]
-			cpms = [float(entity['cpm']) for entity in entities]
-			cpcs = [float(entity['cpc']) for entity in entities]
-			ctrs = [float(entity['ctr']) for entity in entities]
-			frequencys = [float(entity['frequency']) for entity in entities]
+			impressions = 					[float(entity['impressions']) for entity in entities]
+			reaches = 						[float(entity['reach']) for entity in entities]
+			clicks = 						[float(entity['clicks']) for entity in entities]
+			inline_link_clicks = 			[float(entity['inline_link_clicks']) for entity in entities]
+			inline_link_clicks_ctrs = 		[float(entity['inline_link_clicks_ctr']) for entity in entities]
+			outbound_clicks = 				[float(entity['outbound_clicks'][0]['value']) for entity in entities]
+			outbound_clicks_ctrs = 			[float(entity['outbound_clicks_ctr'][0]['value']) for entity in entities]
+			cost_per_outbound_clicks = 		[float(entity['cost_per_outbound_click'][0]['value']) for entity in entities]
+			cost_per_inline_link_clicks =	[float(entity['cost_per_inline_link_click']) for entity in entities]
+			cost_per_total_actions = 		[float(entity['cost_per_total_action']) for entity in entities]
+			cpms = 							[float(entity['cpm']) for entity in entities]
+			cpcs = 							[float(entity['cpc']) for entity in entities]
+			ctrs = 							[float(entity['ctr']) for entity in entities]
+			frequencys = 					[float(entity['frequency']) for entity in entities]
 
 			RESULT[breakdown][key] = {
-				'avg_cpm' : sum(spends)/sum(impressions)*1000,
-				'avg_cpc' : sum(spends)/sum(clicks),
-				'avg_frequency' : sum(impressions)/sum(reaches),
-				'avg_ctr' : sum(clicks)/sum(impressions)*100,
-				'med_cpm' : median(cpms),
-				'med_cpc' : median(cpcs),
-				'med_frequency' : median(frequencys),
-				'med_ctr' : median(ctrs),
+				'avg_cpm' : 						sum(spends)/sum(impressions)*1000,
+				'avg_cpc' : 						sum(spends)/sum(clicks),
+				'avg_frequency' : 					sum(impressions)/sum(reaches),
+				'avg_ctr' : 						sum(clicks)/sum(impressions)*100,
+				'avg_cost_per_inline_link_click' : 	sum(inline_link_clicks)/sum(spends),
+				'avg_cost_per_outbount_click' : 	sum(outbound_clicks)/sum(spends),
+				'med_cpm' : 						median(cpms),
+				'med_cpc' : 						median(cpcs),
+				'med_frequency' : 					median(frequencys),
+				'med_ctr' : 						median(ctrs),
+				'med_cost_per_inline_link_click' :	median(cost_per_inline_link_clicks),
+				'med_cost_per_outbound_clicks' : 	median(cost_per_outbound_clicks),
+				'med_cost_per_total_actions' : 		median(cost_per_total_actions),
 			}
 		RESULT[breakdown]['currency'] = account_currency
 		return HttpResponse(json.dumps(RESULT[breakdown]))
@@ -93,11 +104,9 @@ def get_entities_list(db, user, adaccount, entity):
 	url = 'https://graph.facebook.com/v2.12/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
 	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
 	response = requests.get(url, params=params, headers=headers)
-	# headers = response.headers
 	response = response.json()
 	print('-'*10)
 	print(response)
-	# print(headers)
 	print(user['username'], adaccount, entity)
 	print('-'*10)
 	if 'error' in response:
@@ -109,7 +118,6 @@ def get_entities_list(db, user, adaccount, entity):
 			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
 			time.sleep(TIME['limit_wait_time'])
 			response['data'] = get_entities_list(db, user, adaccount, entity)
-			# return []
 	try:
 		return response['data']
 	except Exception as e:
@@ -126,11 +134,9 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 	url = 'https://graph.facebook.com/v2.12/' + entity['id'] + '/insights?access_token=' + user['long_access_token']
 	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
 	response = requests.get(url, params=params, headers=headers)
-	# headers = response.headers
 	response = response.json()
 	print('-'*10)
 	print(response)
-	# print(headers)
 	print(user['username'], entity_name, entity, breakdowns)
 	print('-'*10)
 	if 'error' in response:
@@ -138,7 +144,6 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
 			time.sleep(TIME['limit_wait_time'])
 			response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
-			# return []
 	try:
 		return response['data']
 	except Exception as e:

@@ -23,7 +23,7 @@ FIELDS = {
         'campaign_id',
         'campaign_name',
         'objective',
-        # 'actions',
+        'actions',
         'spend',
         'impressions',
         'reach',
@@ -51,7 +51,7 @@ FIELDS = {
         'adset_id',
         'adset_name',
         'objective',
-        # 'actions',
+        'actions',
         'spend',
         'impressions',
         'reach',
@@ -81,7 +81,7 @@ FIELDS = {
         'ad_id',
         'ad_name',
         'objective',
-        # 'actions',
+        'actions',
         'spend',
         'impressions',
         'reach',
@@ -103,11 +103,8 @@ FIELDS = {
 }
 
 TIME = {
-    # on local: 0.1, 0.5, 1.0, 2.0(local), 1.5(X), 3.0
     'loop_wait_time':1.0,
-    # on local: 300,
     'limit_wait_time':310,
-    # combination: (1.0, 310, X), (3.0, 310, ) 
 }
 
 RESULT = {
@@ -151,7 +148,5 @@ MAIL = {
     'recipients': [
         'support@wizpace.com',
         'tony.hwang@wizpace.com',
-        # 'danbee@wizpace.com',
-        # 'jusung@wizpace.com'
     ]
 }
