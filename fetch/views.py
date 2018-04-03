@@ -74,7 +74,20 @@ def get_adaccounts(user):
 	except Exception as e:
 		return []
 
-def get_entities_list(user, adaccount, entity):
+def nocap_check(db, adaccounts):
+	nocap_list = list(db['nocap_list'].find())
+	new_adaccounts = list(set([adaccount['account_id'] for adaccount in adaccounts]) - set([nocap['adaccount'] for nocap in nocap_list]))
+	result = []
+	for new_adaccount in new_adaccounts:
+		result.append(
+			{
+				'account_id':new_adaccount,
+				'id': 'act_' + new_adaccount,
+			}
+		)
+	return result
+
+def get_entities_list(db, user, adaccount, entity):
 	params = {'date_preset': 'last_90d'}
 	url = 'https://graph.facebook.com/v2.12/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
 	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
@@ -87,10 +100,15 @@ def get_entities_list(user, adaccount, entity):
 	print(user['username'], adaccount, entity)
 	print('-'*10)
 	if 'error' in response:
+		if response['error']['code'] == 3:
+			print("Application does not have the capability to make this API call.")
+			return update_nocap_list(db, user, adaccount, entity)
+
 		if response['error']['code'] == 17:
-			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
-			time.sleep(TIME['limit_wait_time'])
-			response['data'] = get_entities_list(user, adaccount, entity)
+			# print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			# time.sleep(TIME['limit_wait_time'])
+			# response['data'] = get_entities_list(db, user, adaccount, entity)
+			return []
 	try:
 		return response['data']
 	except Exception as e:
@@ -116,9 +134,10 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 	print('-'*10)
 	if 'error' in response:
 		if response['error']['code'] == 17:
-			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
-			time.sleep(TIME['limit_wait_time'])
-			response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
+			# print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			# time.sleep(TIME['limit_wait_time'])
+			# response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
+			return []
 	try:
 		return response['data']
 	except Exception as e:
@@ -141,6 +160,24 @@ def update_db(db, collection, id_field, insights, breakdowns):
 		)
 	return print("update_db done")
 
+def update_nocap_list(db, user, adaccount, entity):
+	nocap_list = db['nocap_list']
+	replace_data = {
+		'user':user['username'],
+		'adaccount':adaccount['account_id'],
+		'entity':entity,
+		'updated_time':datetime.datetime.now(),
+	}
+	nocap_list.replace_one(
+		{
+			'adaccount':adaccount['id'],
+		},
+		replace_data,
+		upsert=True,
+	)
+	print("update_nocap_list done")
+	return "nocap"
+
 def fetch_all():
 	start_time = time.time()
 	#------------------------
@@ -150,17 +187,21 @@ def fetch_all():
 	
 	for user in users:
 		adaccounts = get_adaccounts(user)
+		# adaccounts = nocap_check(db, adaccounts)
 		breakdowns = [['age'], ['gender'], ['country'], ['publisher_platform'], []]
 		for breakdown in breakdowns:
 			for adaccount in adaccounts:
 				entity_types = ['campaign', 'adset', 'ad']
 				for entity_type in entity_types:
-					entities = get_entities_list(user, adaccount, entity_type)
+					entities = get_entities_list(db, user, adaccount, entity_type)
 					time.sleep(TIME['loop_wait_time'])
+					if entities == "nocap":
+						break
 					for entity in entities:
 							insights = get_entity_insights(user, entity_type, entity, breakdown)
-							update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
-							time.sleep(TIME['loop_wait_time'])
+							if insights:
+								update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
+								time.sleep(TIME['loop_wait_time'])
 	#------------------------
 	print("start_time", start_time)
 	print("--- %s seconds ---" %(time.time() - start_time))
