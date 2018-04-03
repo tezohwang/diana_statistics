@@ -32,15 +32,15 @@ FIELDS = {
         'clicks',
         'ctr',
         'cpc',
-        # 'inline_link_clicks',
-        # 'inline_link_click_ctr',
-        # 'outbound_clicks',
-        # 'outbound_clicks_ctr',
-        # 'canvas_avg_view_percent',
-        # 'cost_per_outbound_click',
-        # 'cost_per_inline_link_click',
-        # 'cost_per_total_action',
-        # 'relevance_score'
+        'inline_link_clicks',
+        'inline_link_click_ctr',
+        'outbound_clicks',
+        'outbound_clicks_ctr',
+        'canvas_avg_view_percent',
+        'cost_per_outbound_click',
+        'cost_per_inline_link_click',
+        'cost_per_total_action',
+        'relevance_score'
     ],
     'adset': [
         'account_id',
@@ -60,15 +60,15 @@ FIELDS = {
         'clicks',
         'ctr',
         'cpc',
-        # 'inline_link_clicks',
-        # 'inline_link_click_ctr',
-        # 'outbound_clicks',
-        # 'outbound_clicks_ctr',
-        # 'canvas_avg_view_percent',
-        # 'cost_per_outbound_click',
-        # 'cost_per_inline_link_click',
-        # 'cost_per_total_action',
-        # 'relevance_score'
+        'inline_link_clicks',
+        'inline_link_click_ctr',
+        'outbound_clicks',
+        'outbound_clicks_ctr',
+        'canvas_avg_view_percent',
+        'cost_per_outbound_click',
+        'cost_per_inline_link_click',
+        'cost_per_total_action',
+        'relevance_score'
     ],
     'ad': [
         'account_id',
@@ -90,15 +90,15 @@ FIELDS = {
         'clicks',
         'ctr',
         'cpc',
-        # 'inline_link_clicks',
-        # 'inline_link_click_ctr',
-        # 'outbound_clicks',
-        # 'outbound_clicks_ctr',
-        # 'canvas_avg_view_percent',
-        # 'cost_per_outbound_click',
-        # 'cost_per_inline_link_click',
-        # 'cost_per_total_action',
-        # 'relevance_score'
+        'inline_link_clicks',
+        'inline_link_click_ctr',
+        'outbound_clicks',
+        'outbound_clicks_ctr',
+        'canvas_avg_view_percent',
+        'cost_per_outbound_click',
+        'cost_per_inline_link_click',
+        'cost_per_total_action',
+        'relevance_score'
     ],
 }
 
@@ -138,7 +138,10 @@ RESULT = {
         'instagram':{},
         'messenger':{},
         'audience_network':{},
-    }
+    },
+    'none':{
+        'data':{},
+    },
 }
 
 MAIL = {

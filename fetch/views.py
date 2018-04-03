@@ -24,19 +24,20 @@ def stats(request):
 		db = connect_db('diana')
 		for key in RESULT[breakdown].keys():
 			print(breakdown, key)
-			entities = list(db['stats_' + entity].find({
-					'breakdowns':[breakdown],
-					'objective':objective,
-					'account_currency':account_currency,
-					breakdown:key,
-				})
-			)
+			query_obj = {
+				'breakdowns':[breakdown],
+				'objective':objective,
+				'account_currency':account_currency,
+			}
+			if not breakdown == 'none':
+				query_obj[breakdown] = key
+			entities = list(db['stats_' + entity].find(query_obj))
 			if not entities:
 				continue
 			if not float(entities[0]['impressions']) * float(entities[0]['clicks']):
 				continue
 			# print(entities)
-
+			print(len(entities))
 			spends = [float(entity['spend']) for entity in entities]
 			impressions = [float(entity['impressions']) for entity in entities]
 			reaches = [float(entity['reach']) for entity in entities]
@@ -105,10 +106,10 @@ def get_entities_list(db, user, adaccount, entity):
 			return update_nocap_list(db, user, adaccount, entity)
 
 		if response['error']['code'] == 17:
-			# print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
-			# time.sleep(TIME['limit_wait_time'])
-			# response['data'] = get_entities_list(db, user, adaccount, entity)
-			return []
+			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			time.sleep(TIME['limit_wait_time'])
+			response['data'] = get_entities_list(db, user, adaccount, entity)
+			# return []
 	try:
 		return response['data']
 	except Exception as e:
@@ -134,10 +135,10 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 	print('-'*10)
 	if 'error' in response:
 		if response['error']['code'] == 17:
-			# print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
-			# time.sleep(TIME['limit_wait_time'])
-			# response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
-			return []
+			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			time.sleep(TIME['limit_wait_time'])
+			response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
+			# return []
 	try:
 		return response['data']
 	except Exception as e:
