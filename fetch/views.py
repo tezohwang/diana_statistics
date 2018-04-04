@@ -42,7 +42,7 @@ def stats(request):
 			reaches = 						[float(entity['reach']) for entity in entities]
 			clicks = 						[float(entity['clicks']) for entity in entities]
 			inline_link_clicks = 			[float(entity['inline_link_clicks']) for entity in entities]
-			inline_link_clicks_ctrs = 		[float(entity['inline_link_clicks_ctr']) for entity in entities]
+			inline_link_click_ctrs = 		[float(entity['inline_link_click_ctr']) for entity in entities]
 			outbound_clicks = 				[float(entity['outbound_clicks'][0]['value']) for entity in entities]
 			outbound_clicks_ctrs = 			[float(entity['outbound_clicks_ctr'][0]['value']) for entity in entities]
 			cost_per_outbound_clicks = 		[float(entity['cost_per_outbound_click'][0]['value']) for entity in entities]
