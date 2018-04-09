@@ -19,6 +19,10 @@ def stats(request):
 		breakdown = 		req['breakdown']
 		objective = 		req['objective']
 		account_currency = 	req['account_currency']
+		entity_id = 		''
+		if entity + '_id' in req:
+			print(entity + '_id, exist')
+			entity_id = req[entity + '_id']
 
 		db = connect_db('diana')
 		for key in RESULT[breakdown].keys():
@@ -28,6 +32,8 @@ def stats(request):
 				'objective':		objective,
 				'account_currency':	account_currency,
 			}
+			if entity_id:
+				query_obj[entity + '_id'] = entity_id
 			if not breakdown == 'none':
 				query_obj[breakdown] = key
 			entities = list(db['stats_' + entity].find(query_obj))
@@ -37,7 +43,7 @@ def stats(request):
 				continue
 			# print(entities)
 			print(len(entities))
-			spends = [float(entity['spend']) for entity in entities]
+			spends = 						[float(entity['spend']) for entity in entities]
 			impressions = 					[float(entity['impressions']) for entity in entities]
 			reaches = 						[float(entity['reach']) for entity in entities]
 			clicks = 						[float(entity['clicks']) for entity in entities]
@@ -54,21 +60,23 @@ def stats(request):
 			frequencys = 					[float(entity['frequency']) for entity in entities]
 
 			RESULT[breakdown][key] = {
-				'avg_cpm' : 						sum(spends)/sum(impressions)*1000,
-				'avg_cpc' : 						sum(spends)/sum(clicks),
-				'avg_frequency' : 					sum(impressions)/sum(reaches),
-				'avg_ctr' : 						sum(clicks)/sum(impressions)*100,
-				'avg_cost_per_inline_link_click' : 	sum(spends)/sum(inline_link_clicks),
-				'avg_cost_per_outbount_click' : 	sum(spends)/sum(outbound_clicks),
-				'med_cpm' : 						median(cpms),
-				'med_cpc' : 						median(cpcs),
-				'med_frequency' : 					median(frequencys),
-				'med_ctr' : 						median(ctrs),
-				'med_cost_per_inline_link_click' :	median(cost_per_inline_link_clicks),
-				'med_cost_per_outbound_clicks' : 	median(cost_per_outbound_clicks),
-				'med_cost_per_total_actions' : 		median(cost_per_total_actions),
+				'objective':						entities[0]['objective'],
+				'avg_cpm' : 						round(sum(spends)/sum(impressions)*1000, 2),
+				'avg_cpc' : 						round(sum(spends)/sum(clicks), 2),
+				'avg_frequency' : 					round(sum(impressions)/sum(reaches), 2),
+				'avg_ctr' : 						round(sum(clicks)/sum(impressions)*100, 2),
+				'avg_cost_per_inline_link_click' : 	round(sum(spends)/sum(inline_link_clicks), 2),
+				'avg_cost_per_outbount_click' : 	round(sum(spends)/sum(outbound_clicks), 2),
+				'med_cpm' : 						round(median(cpms), 2),
+				'med_cpc' : 						round(median(cpcs), 2),
+				'med_frequency' : 					round(median(frequencys), 2),
+				'med_ctr' : 						round(median(ctrs), 2),
+				'med_cost_per_inline_link_click' :	round(median(cost_per_inline_link_clicks), 2),
+				'med_cost_per_outbound_click' : 	round(median(cost_per_outbound_clicks), 2),
+				'med_cost_per_total_action' : 		round(median(cost_per_total_actions), 2),
 			}
 		RESULT[breakdown]['currency'] = account_currency
+		print(RESULT[breakdown])
 		return HttpResponse(json.dumps(RESULT[breakdown]))
 	return HttpResponse("error")
 
