@@ -77,7 +77,7 @@ def stats(request):
 			}
 		RESULT[breakdown]['currency'] = account_currency
 		print(RESULT[breakdown])
-		return HttpResponse(json.dumps(RESULT[breakdown]))
+		return HttpResponse(json.dumps(RESULT[breakdown]).encode('utf-8'))
 	return HttpResponse("error")
 
 	
