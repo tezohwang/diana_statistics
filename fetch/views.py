@@ -43,21 +43,21 @@ def stats(request):
 				continue
 			# print(entities)
 			print(len(entities))
-			spends = 						[float(entity['spend']) for entity in entities]
-			impressions = 					[float(entity['impressions']) for entity in entities]
-			reaches = 						[float(entity['reach']) for entity in entities]
-			clicks = 						[float(entity['clicks']) for entity in entities]
-			inline_link_clicks = 			[float(entity['inline_link_clicks']) for entity in entities]
-			inline_link_click_ctrs = 		[float(entity['inline_link_click_ctr']) for entity in entities]
-			outbound_clicks = 				[float(entity['outbound_clicks'][0]['value']) for entity in entities]
-			outbound_clicks_ctrs = 			[float(entity['outbound_clicks_ctr'][0]['value']) for entity in entities]
-			cost_per_outbound_clicks = 		[float(entity['cost_per_outbound_click'][0]['value']) for entity in entities]
-			cost_per_inline_link_clicks =	[float(entity['cost_per_inline_link_click']) for entity in entities]
-			cost_per_total_actions = 		[float(entity['cost_per_total_action']) for entity in entities]
-			cpms = 							[float(entity['cpm']) for entity in entities]
-			cpcs = 							[float(entity['cpc']) for entity in entities]
-			ctrs = 							[float(entity['ctr']) for entity in entities]
-			frequencys = 					[float(entity['frequency']) for entity in entities]
+			spends = 						[float(entity['spend']) for entity in entities if 'spend' in entity]
+			impressions = 					[float(entity['impressions']) for entity in entities if 'impressions' in entity]
+			reaches = 						[float(entity['reach']) for entity in entities if 'reach' in entity]
+			clicks = 						[float(entity['clicks']) for entity in entities if 'clicks' in entity]
+			inline_link_clicks = 			[float(entity['inline_link_clicks']) for entity in entities if 'inline_link_clicks' in entity]
+			inline_link_click_ctrs = 		[float(entity['inline_link_click_ctr']) for entity in entities if 'inline_link_click_ctr' in entity]
+			outbound_clicks = 				[float(entity['outbound_clicks'][0]['value']) for entity in entities if 'outbound_clicks' in entity]
+			outbound_clicks_ctrs = 			[float(entity['outbound_clicks_ctr'][0]['value']) for entity in entities if 'outbound_clicks_ctr' in entity]
+			cost_per_outbound_clicks = 		[float(entity['cost_per_outbound_click'][0]['value']) for entity in entities if 'cost_per_outbound_click' in entity]
+			cost_per_inline_link_clicks =	[float(entity['cost_per_inline_link_click']) for entity in entities if 'cost_per_inline_link_click' in entity]
+			cost_per_total_actions = 		[float(entity['cost_per_total_action']) for entity in entities if 'cost_per_total_action' in entity]
+			cpms = 							[float(entity['cpm']) for entity in entities if 'cpm' in entity]
+			cpcs = 							[float(entity['cpc']) for entity in entities if 'cpc' in entity]
+			ctrs = 							[float(entity['ctr']) for entity in entities if 'ctr' in entity]
+			frequencys = 					[float(entity['frequency']) for entity in entities if 'frequency' in entity]
 
 			RESULT[breakdown][key] = {
 				'objective':						entities[0]['objective'],
@@ -78,7 +78,7 @@ def stats(request):
 		RESULT[breakdown]['currency'] = account_currency
 		print(RESULT[breakdown])
 		return HttpResponse(json.dumps(RESULT[breakdown]).encode('utf-8'))
-	return HttpResponse("error")
+	return HttpResponse(json.dumps("error").encode('utf-8'))
 
 	
 # Control View
