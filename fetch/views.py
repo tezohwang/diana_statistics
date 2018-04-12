@@ -28,19 +28,15 @@ def stats(request):
 		for key in RESULT[breakdown].keys():
 			print(breakdown, key)
 			query_obj = {
-				'breakdowns':		[breakdown],
-				'objective':		objective,
-				'account_currency':	account_currency,
+				'breakdowns':			[breakdown],
+				'objective':			objective,
+				'account_currency':		account_currency,
 			}
-			if entity_id:
-				query_obj[entity + '_id'] = entity_id
-			if not breakdown == 'none':
-				query_obj[breakdown] = key
+			if entity_id: query_obj[entity + '_id'] = entity_id
+			if not breakdown == 'none': query_obj[breakdown] = key
 			entities = list(db['stats_' + entity].find(query_obj))
-			if not entities:
-				continue
-			if not float(entities[0]['impressions']) * float(entities[0]['clicks']):
-				continue
+			if not entities: continue
+			if not float(entities[0]['impressions']) * float(entities[0]['clicks']): continue
 			# print(entities)
 			print(len(entities))
 			spends = 						[float(entity['spend']) for entity in entities if 'spend' in entity]
@@ -89,10 +85,8 @@ def get_adaccounts(user):
 	url = 'https://graph.facebook.com/v2.12/' + user['user_id'] + '/adaccounts?access_token=' + user['long_access_token']
 	response = requests.get(url).json()
 	# print(response)
-	try:
-		return response['data']
-	except Exception as e:
-		return []
+	try: return response['data']
+	except Exception as e: return []
 
 def nocap_check(db, adaccounts):
 	nocap_list = list(db['nocap_list'].find())
@@ -101,8 +95,8 @@ def nocap_check(db, adaccounts):
 	for new_adaccount in new_adaccounts:
 		result.append(
 			{
-				'account_id':new_adaccount,
-				'id': 'act_' + new_adaccount,
+				'account_id':	new_adaccount,
+				'id': 			'act_' + new_adaccount,
 			}
 		)
 	return result
@@ -114,73 +108,122 @@ def get_entities_list(db, user, adaccount, entity):
 	response = requests.get(url, params=params, headers=headers)
 	response = response.json()
 	print('-'*10)
-	print(response)
+	# print(response)
 	print(user['username'], adaccount, entity)
 	print('-'*10)
 	if 'error' in response:
 		if response['error']['code'] == 3:
 			print("Application does not have the capability to make this API call.")
 			return update_nocap_list(db, user, adaccount, entity)
-
 		if response['error']['code'] == 17:
+			# return []
 			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
 			time.sleep(TIME['limit_wait_time'])
 			response['data'] = get_entities_list(db, user, adaccount, entity)
-	try:
-		return response['data']
-	except Exception as e:
-		return []
+	try: return response['data']
+	except Exception as e: return []
+
+def get_entity_field_values(db, user, adaccount, entity, entity_type):
+	params = {'date_preset': 'last_90d'}
+	if entity_type != 'adset': return []
+	params['fields'] = str([
+		'id',
+		'account_id',
+		'campaign_id',
+		'name',
+		'billing_event',
+		'budget_remaining',
+		'daily_budget',
+		'lifetime_budget',
+		'optimization_goal',
+	])
+	url = 'https://graph.facebook.com/v2.12/' + entity['id'] + '?access_token=' + user['long_access_token']
+	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
+	response = requests.get(url, params=params, headers=headers)
+	response = response.json()
+	print('-'*30)
+	print(response)
+	print(user['username'], adaccount, entity)
+	print('-'*30)
+	if 'error' in response:
+		if response['error']['code'] == 3:
+			print("Application does not have the capability to make this API call.")
+			return update_nocap_list(db, user, adaccount, entity)
+		if response['error']['code'] == 17:
+			# return []
+			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
+			time.sleep(TIME['limit_wait_time'])
+			response = get_entity_field_values(db, user, adaccount, entity, entity_type)
+	try: return response
+	except Exception as e: return []
 
 def get_entity_insights(user, entity_name, entity, breakdowns):
 	fields = FIELDS[entity_name]
 	params = {
-		'fields': str(fields),
-		'date_preset': 'last_90d',
-		'time_increment': 'all_days',
-		'breakdowns': str(breakdowns),
+		'fields': 			str(fields),
+		'date_preset': 		'last_90d',
+		'time_increment': 	'all_days',
+		'breakdowns': 		str(breakdowns),
 	}
 	url = 'https://graph.facebook.com/v2.12/' + entity['id'] + '/insights?access_token=' + user['long_access_token']
 	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
 	response = requests.get(url, params=params, headers=headers)
 	response = response.json()
 	print('-'*10)
-	print(response)
+	# print(response)
 	print(user['username'], entity_name, entity, breakdowns)
 	print('-'*10)
 	if 'error' in response:
 		if response['error']['code'] == 17:
+			# return []
 			print("reach api limit, wait {} seconds and retry".format(TIME['limit_wait_time']))
 			time.sleep(TIME['limit_wait_time'])
 			response['data'] = get_entity_insights(user, entity_name, entity, breakdowns)
-	try:
-		return response['data']
-	except Exception as e:
-		return []
+	try: return response['data']
+	except Exception as e: return []
 
 def update_db(db, collection, id_field, insights, breakdowns):
 	stats = db[collection]
 	for insight in insights:
 		insight['breakdowns'] = breakdowns
-		if not breakdowns:
-			insight['breakdowns'] = ['none']
+		if not breakdowns: insight['breakdowns'] = ['none']
 		insight['updated_time'] = datetime.datetime.now()
 		stats.replace_one(
 			{
-				id_field: insight[id_field],
-				'breakdowns': insight['breakdowns'],
+				id_field: 		insight[id_field],
+				'breakdowns': 	insight['breakdowns'],
 			},
 			insight,
 			upsert=True,
 		)
 	return print("update_db done")
 
+def update_field_values(db, user, field_values, breakdown):
+	stats_adset = db['stats_adset']
+	stats_adset.update(
+		{
+			'adset_id': 	field_values['id'],
+			'breakdowns': 	breakdown,
+		},
+		{
+			'$set': {
+				'billing_event': 		field_values['billing_event'],
+				'budget_remaining': 	field_values['budget_remaining'],
+				'daily_budget': 		field_values['daily_budget'],
+				'lifetime_budget': 		field_values['lifetime_budget'],
+				'optimization_goal': 	field_values['optimization_goal'],
+			}
+		}
+	)
+	return print("update_field_values done")
+
 def update_nocap_list(db, user, adaccount, entity):
 	nocap_list = db['nocap_list']
 	replace_data = {
-		'user':user['username'],
-		'adaccount':adaccount['account_id'],
-		'entity':entity,
-		'updated_time':datetime.datetime.now(),
+		'user':			user['username'],
+		'adaccount':	adaccount['account_id'],
+		'entity':		entity,
+		'updated_time':	datetime.datetime.now(),
 	}
 	nocap_list.replace_one(
 		{
@@ -195,9 +238,9 @@ def update_nocap_list(db, user, adaccount, entity):
 def fetch_all():
 	start_time = time.time()
 	#------------------------
-	db = connect_db('notification')
-	users = get_users(db)
-	db = connect_db('diana')
+	db = 		connect_db('notification')
+	users = 	get_users(db)
+	db = 		connect_db('diana')
 	
 	for user in users:
 		adaccounts = get_adaccounts(user)
@@ -206,16 +249,19 @@ def fetch_all():
 		for breakdown in breakdowns:
 			for adaccount in adaccounts:
 				entity_types = ['campaign', 'adset', 'ad']
+				# entity_types = ['adset']
 				for entity_type in entity_types:
 					entities = get_entities_list(db, user, adaccount, entity_type)
 					time.sleep(TIME['loop_wait_time'])
-					if entities == "nocap":
-						break
+					if entities == "nocap": break
 					for entity in entities:
 							insights = get_entity_insights(user, entity_type, entity, breakdown)
 							if insights:
 								update_db(db, 'stats_' + entity_type, entity_type + '_id', insights, breakdown)
 								time.sleep(TIME['loop_wait_time'])
+								field_values = get_entity_field_values(db, user, adaccount, entity, entity_type)
+								if field_values: update_field_values(db, user, field_values, breakdown)
+
 	#------------------------
 	print("start_time", start_time)
 	print("--- %s seconds ---" %(time.time() - start_time))
