@@ -131,7 +131,7 @@ def get_entities_list(db, user, adaccount, entity):
 	except Exception as e: return []
 
 def get_entity_field_values(db, user, adaccount, entity, entity_type):
-	params = {'date_preset': 'last_90d'}
+	params = {'date_preset': 'last_30d'}
 	if entity_type != 'adset': return []
 	params['fields'] = str([
 		'id',
@@ -168,7 +168,7 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 	fields = FIELDS[entity_name]
 	params = {
 		'fields': 			str(fields),
-		'date_preset': 		'last_90d',
+		'date_preset': 		'last_30d',
 		'time_increment': 	'all_days',
 		'breakdowns': 		str(breakdowns),
 	}
