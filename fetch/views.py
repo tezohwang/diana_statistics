@@ -20,20 +20,27 @@ def stats(request):
 		objective = 		req['objective']
 		account_currency = 	req['account_currency']
 		entity_id = 		''
-		if entity + '_id' in req:
-			print(entity + '_id, exist')
-			entity_id = req[entity + '_id']
+		billing_event = 	''
+		optimization_goal = ''
+
+		if entity + '_id' in req:			entity_id = req[entity + '_id']
+		if 'billing_event' in req:			billing_event = req['billing_event']
+		if 'optimization_goal' in req:		optimization_goal = req['optimization_goal']
 
 		db = connect_db('diana')
 		for key in RESULT[breakdown].keys():
-			print(breakdown, key)
+			print(entity, breakdown, objective, account_currency, key)
 			query_obj = {
 				'breakdowns':			[breakdown],
 				'objective':			objective,
 				'account_currency':		account_currency,
 			}
-			if entity_id: query_obj[entity + '_id'] = entity_id
-			if not breakdown == 'none': query_obj[breakdown] = key
+			if entity_id: 					query_obj[entity + '_id']		= entity_id
+			if billing_event: 				query_obj['billing_event'] 		= billing_event
+			if optimization_goal: 			query_obj['optimization_goal'] 	= optimization_goal
+			if not breakdown == 'none': 	query_obj[breakdown] 			= key
+			
+			print(query_obj)
 			entities = list(db['stats_' + entity].find(query_obj))
 			if not entities: continue
 			if not float(entities[0]['impressions']) * float(entities[0]['clicks']): continue
