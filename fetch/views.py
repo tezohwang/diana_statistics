@@ -189,11 +189,11 @@ def get_entity_insights(user, entity_name, entity, breakdowns):
 	try: return response['data']
 	except Exception as e: return []
 
-def update_db(db, collection, id_field, insights, breakdowns):
+def update_db(db, collection, id_field, insights, breakdown):
 	stats = db[collection]
 	for insight in insights:
-		insight['breakdowns'] = breakdowns
-		if not breakdowns: insight['breakdowns'] = ['none']
+		insight['breakdowns'] = breakdown
+		if not breakdown: insight['breakdowns'] = ['none']
 		insight['updated_time'] = datetime.datetime.now()
 		stats.replace_one(
 			{
@@ -207,6 +207,7 @@ def update_db(db, collection, id_field, insights, breakdowns):
 
 def update_field_values(db, user, field_values, breakdown):
 	stats_adset = db['stats_adset']
+	if not breakdown: breakdown = ['none']
 	stats_adset.update(
 		{
 			'adset_id': 	field_values['id'],
