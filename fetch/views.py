@@ -109,7 +109,7 @@ def nocap_check(db, adaccounts):
 	return result
 
 def get_entities_list(db, user, adaccount, entity):
-	params = {'date_preset': 'last_90d'}
+	params = {'date_preset': 'last_30d'}
 	url = 'https://graph.facebook.com/v2.12/' + adaccount['id'] + '/' + entity + 's?access_token=' + user['long_access_token']
 	headers = {'Content-Type': 'application/json; charset=utf-8', 'content-encoding': 'gzip'}
 	response = requests.get(url, params=params, headers=headers)
