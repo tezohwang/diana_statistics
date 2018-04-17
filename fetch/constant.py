@@ -2,12 +2,12 @@
 
 DATABASE = {
     'diana': {
-        'db_uri': 'mongodb://wizpace:wizpace0@52.78.216.222:27017/diana',
+        'db_uri': 'mongodb://wizpace:wizpace0@13.125.239.144:27017/diana',
         'db_name': 'diana'
     },
     'notification': {
         'db_uri': 'mongodb://tezohwang:xowhghkd1!@ds113826.mlab.com:13826/diana_notification',
-		'db_name': 'diana_notification'
+        'db_name': 'diana_notification'
     }
 }
 FB_APP = {
@@ -103,41 +103,41 @@ FIELDS = {
 }
 
 TIME = {
-    'loop_wait_time':1.0,
-    'limit_wait_time':310,
+    'loop_wait_time': 1.0,
+    'limit_wait_time': 310,
 }
 
 RESULT = {
-    'age':{
-        '13-17':{},
-        '18-24':{},
-        '25-34':{},
-        '35-44':{},
-        '45-54':{},
-        '55-64':{},
-        '65+':{},
+    'age': {
+        '13-17': {},
+        '18-24': {},
+        '25-34': {},
+        '35-44': {},
+        '45-54': {},
+        '55-64': {},
+        '65+': {},
     },
-    'gender':{
-        'male':{},
-        'female':{},
+    'gender': {
+        'male': {},
+        'female': {},
     },
-    'country':{
-        'US':{},
-        'KR':{},
-        'MX':{},
-        'PE':{},
-        'RO':{},
-        'DZ':{},
-        'GD':{},
+    'country': {
+        'US': {},
+        'KR': {},
+        'MX': {},
+        'PE': {},
+        'RO': {},
+        'DZ': {},
+        'GD': {},
     },
-    'publisher_platform':{
-        'facebook':{},
-        'instagram':{},
-        'messenger':{},
-        'audience_network':{},
+    'publisher_platform': {
+        'facebook': {},
+        'instagram': {},
+        'messenger': {},
+        'audience_network': {},
     },
-    'none':{
-        'data':{},
+    'none': {
+        'data': {},
     },
 }
 
